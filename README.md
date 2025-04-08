@@ -1,76 +1,74 @@
-# EXP.NO-03  PULSE CODE MODULATION
-# AIM:
-To implement and analyze the Pulse Code Modulation (PCM) process using Python by performing sampling, quantization, and encoding of an analog signal.
-# TOOLS REQUIRED:
+#  EXP.NO : 02 NATURAL SAMPLING
+# AIM: 
+   To perform construction and reconstruction of natural sampling using python code
+# APPARATUS REQUIRED:
 IDE python with scipy and numpy
-# PROGRAM:
+# PROGRAM : 
 ```
-# PCM import matplotlib.pyplot as plt
 import numpy as np
-
+import matplotlib.pyplot as plt
+from scipy.signal import butter, lfilter
 # Parameters
-sampling_rate = 5000  # Sampling rate (samples per second)
-frequency = 50  # Frequency of the message signal (analog signal)
-duration = 0.1  # Duration of the signal in seconds
-quantization_levels = 16  # Number of quantization levels (PCM resolution)
-
-# Generate time vector
-t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
-
-# Generate message signal (analog signal)
-message_signal = np.sin(2 * np.pi * frequency * t)
-
-# Generate clock signal (sampling clock) with higher frequency than before
-clock_signal = np.sign(np.sin(2 * np.pi * 200 * t))  # Increased clock frequency to 200 Hz
-
-# Quantize the message signal
-quantization_step = (max(message_signal) - min(message_signal)) / quantization_levels
-quantized_signal = np.round(message_signal / quantization_step) * quantization_step
-
-# Simulate the PCM modulated signal (digital representation)
-pcm_signal = (quantized_signal - min(quantized_signal)) / quantization_step
-pcm_signal = pcm_signal.astype(int)
-
-# Plotting the results
-plt.figure(figsize=(12, 10))
-
-# Plot message signal
+fs = 1000  # Sampling frequency (samples per second)
+T = 1  # Duration in seconds
+t = np.arange(0, T, 1/fs)  # Time vector
+# Message Signal (sine wave message)
+fm = 5  # Frequency of message signal (Hz)
+message_signal = np.sin(2 * np.pi * fm * t)
+# Pulse Train Parameters
+pulse_rate = 50  # pulses per second
+pulse_train = np.zeros_like(t)
+# Construct Pulse Train (rectangular pulses)
+pulse_width = int(fs / pulse_rate / 2)
+for i in range(0, len(t), int(fs / pulse_rate)):
+  pulse_train[i:i+pulse_width] = 1
+# Natural Sampling
+nat_signal = message_signal * pulse_train
+# Reconstruction (Demodulation) Process
+sampled_signal = nat_signal[pulse_train == 1]
+# Create a time vector for the sampled points
+sample_times = t[pulse_train == 1]
+# Interpolation - Zero-Order Hold (just for visualization)
+reconstructed_signal = np.zeros_like(t)
+for i, time in enumerate(sample_times):
+    index = np.argmin(np.abs(t - time))
+    reconstructed_signal[index:index+pulse_width] = sampled_signal[i]
+# Low-pass Filter (optional, smoother reconstruction)
+def lowpass_filter(signal, cutoff, fs, order=5):
+   nyquist = 0.5 * fs
+   normal_cutoff = cutoff / nyquist
+   b, a = butter(order, normal_cutoff, btype='low', analog=False)
+   return lfilter(b, a, signal)
+reconstructed_signal = lowpass_filter(reconstructed_signal,10, fs)
+plt.figure(figsize=(14, 10))
+# Original Message Signal
 plt.subplot(4, 1, 1)
-plt.plot(t, message_signal, label="Message Signal (Analog)", color='blue')
-plt.title("Message Signal (Analog)")
-plt.xlabel("Time [s]")
-plt.ylabel("Amplitude")
+plt.plot(t, message_signal, label='Original Message Signal')
+plt.legend()
 plt.grid(True)
-
-# Plot clock signal (higher frequency)
+# Pulse Train
 plt.subplot(4, 1, 2)
-plt.plot(t, clock_signal, label="Clock Signal (Increased Frequency)", color='green')
-plt.title("Clock Signal (Increased Frequency)")
-plt.xlabel("Time [s]")
-plt.ylabel("Amplitude")
+plt.plot(t, pulse_train, label='Pulse Train')
+plt.legend()
 plt.grid(True)
-
-# Plot PCM modulated signal (quantized)
+# Natural Sampling
 plt.subplot(4, 1, 3)
-plt.step(t, quantized_signal, label="PCM Modulated Signal", color='red')
-plt.title("PCM Modulated Signal (Quantized)")
-plt.xlabel("Time [s]")
-plt.ylabel("Amplitude")
+plt.plot(t, nat_signal, label='Natural Sampling')
+plt.legend()
 plt.grid(True)
-
-# Plot 'PCM Demodulation'
+# Reconstructed Signal
 plt.subplot(4, 1, 4)
-plt.plot(t, quantized_signal, label="Signal Demodulation", color='purple', linestyle='--')
-plt.title("Signal Without Demodulation")
-plt.xlabel("Time [s]")
-plt.ylabel("Amplitude")
+plt.plot(t, reconstructed_signal, label='Reconstructed Message Signal', color='green')
+plt.legend()
 plt.grid(True)
-
 plt.tight_layout()
 plt.show()
 ```
 # OUTPUT WAVEFORM:
-![EXP-03 1](https://github.com/user-attachments/assets/eb1f52a0-7a2b-4567-ab1a-552e2d87d2cf)
+![EXP-02 1](https://github.com/user-attachments/assets/1732133a-c144-483e-8cc3-c5c9064bc8f0)
 
-# RESULT:
-Thus, an analog signal is successfully digitized using Pulse Code Modulation (PCM) in Python.
+# RESULTS:
+  Thus the given construction and reconstruction of Natural sampling has been verified successfully.
+
+
+
